@@ -2,14 +2,35 @@ package com.example.login.request;
 
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.widget.Toast;
 
 import com.example.login.model.Usuario;
 
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+
 public class ApiClient {
 
-    private  static SharedPreferences sp;
+    private static  File file;
 
-    private static SharedPreferences conectar(Context context)
+    private static  File conectar(Context context)
+    {
+      if (file == null)
+      {
+          file= new File(context.getFilesDir(),"datos.dat");
+      }
+      return  file;
+    }
+    //private  static SharedPreferences sp;
+
+  /*  private static SharedPreferences conectar(Context context)
     {
       if(sp== null)
       {
@@ -17,24 +38,46 @@ public class ApiClient {
       }
 
       return sp;
-    }
+    }*/
 
     public static void guardar(Context context, Usuario usuario)
     {
-        SharedPreferences sp= conectar(context);
+        /*SharedPreferences sp= conectar(context);
         SharedPreferences.Editor editor= sp.edit();
         editor.putLong("dni",usuario.getDni());
         editor.putString("apellido", usuario.getApellido());
         editor.putString("nombre",usuario.getNombre());
         editor.putString("mail",usuario.getMail());
         editor.putString("password", usuario.getPassword());
-        editor.commit();
+        editor.commit();*/
+
+     try {
+         File fl= conectar(context);
+         FileOutputStream fo = new FileOutputStream(fl);
+         BufferedOutputStream bo = new BufferedOutputStream(fo);
+         DataOutputStream dos = new DataOutputStream(bo);
+         dos.writeLong(usuario.getDni());
+         dos.writeUTF(usuario.getApellido());
+         dos.writeUTF(usuario.getNombre());
+         dos.writeUTF(usuario.getMail());
+         dos.writeUTF(usuario.getPassword());
+
+         bo.flush();
+         fo.close();
+     }catch (FileNotFoundException e)
+     {
+         Toast.makeText(context,"Archivo no encontrado",Toast.LENGTH_LONG).show();
+     }
+     catch (IOException e)
+     {
+         Toast.makeText(context,"Error de E/S",Toast.LENGTH_LONG).show();
+     }
     }
 
     public static Usuario leer(Context context)
-    {
+    { Usuario usuario= null;
 
-        SharedPreferences sp= conectar(context);
+       /* SharedPreferences sp= conectar(context);
         Long dni=sp.getLong("dni", -1);
         String apellido= sp.getString("apellido","-1");
         String nombre=sp.getString("nombre", "-1");
@@ -42,26 +85,69 @@ public class ApiClient {
         String password=sp.getString("password", "-1");
 
         Usuario usuario= new Usuario(dni,apellido,nombre,mail,password);
-        return usuario;
+        return usuario;*/
+       try{
+             File fl= conectar(context);
+             FileInputStream fi= new FileInputStream(fl);
+             BufferedInputStream bi= new BufferedInputStream(fi);
+             DataInputStream dis= new DataInputStream(bi);
+
+             long dni=dis.readLong();
+             String apellido=dis.readUTF();
+             String nombre=dis.readUTF();
+             String mail=dis.readUTF();
+             String password=dis.readUTF();
+
+              usuario= new Usuario(dni,apellido,nombre,mail,password);
+
+
+             fi.close();
+       }catch (FileNotFoundException e)
+       {
+           Toast.makeText(context,"Archivo no encontrado",Toast.LENGTH_LONG).show();
+       }
+       catch (IOException e)
+       {
+           Toast.makeText(context,"Error de E/S",Toast.LENGTH_LONG).show();
+       }
+        return  usuario;
     }
 
-    public static Usuario login(Context context,String email, String pass)
-    {  Usuario usuario= null;
-
+    public static Usuario login(Context context,String email, String pass) {
+        Usuario usuario = null;
+      /*
       SharedPreferences sp=conectar(context);
       Long dni= sp.getLong("dni", -1);
       String apellido=sp.getString("apellido","-1");
       String nombre=sp.getString("nombre", "-1");
       String mail=sp.getString("mail", "-1");
-      String password=sp.getString("password", "-1");
+      String password=sp.getString("password", "-1");*/
+
+        try {
+            File fl = conectar(context);
+            FileInputStream fi = new FileInputStream(fl);
+            BufferedInputStream bi = new BufferedInputStream(fi);
+            DataInputStream dis = new DataInputStream(bi);
+
+            long dni = dis.readLong();
+            String apellido = dis.readUTF();
+            String nombre = dis.readUTF();
+            String mail = dis.readUTF();
+            String password = dis.readUTF();
+
+            if(email.equals(mail) && pass.equals(password))
+            {
+                usuario= new Usuario(dni,apellido,nombre,mail,password);
+            }
 
 
-     if(email.equals(mail) && pass.equals(password))
-     {
-         usuario= new Usuario(dni,apellido,nombre,email,password);
-     }
+            fi.close();
+        } catch (FileNotFoundException e) {
+            Toast.makeText(context, "Archivo no encontrado", Toast.LENGTH_LONG).show();
+        } catch (IOException e) {
+            Toast.makeText(context, "Error de E/S", Toast.LENGTH_LONG).show();
+        }
+        return  usuario;
 
-       return  usuario;
     }
-
 }
